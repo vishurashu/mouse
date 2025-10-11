@@ -6,8 +6,8 @@ const Middlewear = require("../Middlewear/order");
 const Comman = require("../Middlewear/comman");
 const Review = require("../Model/review");
 const axios = require("axios");
-const path = require('path')
-const fs = require("fs")
+const path = require("path");
+const fs = require("fs");
 // const User = require("../Model/User")
 
 // Models
@@ -599,22 +599,765 @@ exports.getLaser = async (req, res) => {
   }
 };
 
+// exports.Pdf = async (req, res) => {
+//   try {
+//     const filePath = path.join(__dirname, "..", "..", "uploads", "test.pdf");
+
+//     console.log(">>>>>>>>>>>>>>>>filePath", filePath);
+//     // Check if file exists
+//     if (!fs.existsSync(filePath)) {
+//       return res
+//         .status(404)
+//         .json({ success: false, message: "File not found" });
+//     }
+//     // Read file as buffer
+//     const file = fs.readFileSync(filePath);
+//     // const file = req.file;
+//     const pdfData = await pdfParse(file.buffer);
+//     const lines = pdfData.text
+//       .split("\n")
+//       .map((l) => l.trim())
+//       .filter((l) => l.length > 0);
+
+//     const entries = [];
+//     let currentEntry = null;
+//     let narration = "";
+//     let ledgerList = [];
+//     let currentDate = "";
+//     let entryCounter = 0; // resets each date section
+
+//     for (let i = 0; i < lines.length; i++) {
+//       const line = lines[i];
+
+//       // 🔹 Skip header & irrelevant lines
+//       if (
+//         line.startsWith("ZAMINDARA FARMSOLUTIONS") ||
+//         line.startsWith("FEROZEPUR ROAD") ||
+//         line.startsWith("FAZILKA") ||
+//         line.includes("Journal Book") ||
+//         line.includes("Dr. Amount") ||
+//         line.includes("Particulars") ||
+//         line.includes("S.No.") ||
+//         line.startsWith("Page")
+//       )
+//         continue;
+
+//       // 🔹 Detect date line → "01/04/2025 B/F  0.00  0.00"
+//       const dateMatch = line.match(/^(\d{2}\/\d{2}\/\d{4})\s+B\/F/);
+
+//       if (dateMatch) {
+//         const newDate = dateMatch[1];
+//         // ✅ Reset numbering when new date section starts
+//         if (newDate !== currentDate) {
+//           currentDate = newDate;
+//           entryCounter = 0;
+//         }
+//         continue;
+//       }
+//       // 🔹 Detect new journal entry → "1  47821.00SILAGE FACTORY"
+//       const entryStart = line.match(/^(\d+)\s+([\d,.]+)(.+)$/);
+//       // console.log(">>>>>>>>>>>>>>>>>dateMatch", entryStart);
+//       if (entryStart) {
+//         // Save previous entry if exists
+//         if (currentEntry) {
+//           ledgerList.forEach((l, index) => {
+//             currentEntry[`ledname${index + 1}`] = l.name;
+//             currentEntry[`Dbtamt${index + 1}`] = l.amount;
+//           });
+//           currentEntry.Narration = narration.trim();
+//           entries.push({ Jrnlentry: currentEntry });
+//         }
+
+//         // Reset for new entry
+//         narration = "";
+//         ledgerList = [];
+//         entryCounter += 1; // ✅ increment within current date
+
+//         // Create new entry
+//         ledgerList.push({
+//           amount: entryStart[2].trim(),
+//           name: entryStart[3].trim(),
+//         });
+
+//         currentEntry = {
+//           number: entryCounter,
+//           date: currentDate || "",
+//         };
+//         continue;
+//       }
+
+//       // 🔹 Detect additional ledgers → "47821.00WHEAT STRAW SALE"
+//       // 🔹 Detect additional ledgers → e.g. "47821.00 WHEAT STRAW SALE"
+//       // 🔹 Detect additional ledgers (true Dr/Cr lines only)
+//       // 🔹 Detect additional ledgers (true Dr/Cr lines only)
+//       const ledgerLine = line.match(/^([\d,.]+)\s*(.+)$/);
+//       if (ledgerLine) {
+//         const amount = ledgerLine[1].trim();
+//         const name = ledgerLine[2].trim();
+
+//         // 🧠 Skip invalid or narration-like lines
+//         if (
+//           // long numeric references like "196331288677 0"
+//           amount.length > 8 ||
+//           name.match(/^\d+$/) || // if name itself is just a number
+//           name === "0" ||
+//           name.match(/\d{6,}/) || // any long numeric string
+//           name.includes("@") || // UPI or email-like content
+//           name.match(/(Bill|Being|UPI|Tuda|Slip|No\.|Dated|Against)/i) ||
+//           name.match(/^(Total|C\/F|B\/F)/i) ||
+//           name.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/i)
+//         ) {
+//           narration += (narration ? " " : "") + line;
+//           continue;
+//         }
+
+//         // ✅ Only add if it’s a clean Dr/Cr style line
+//         ledgerList.push({ amount, name });
+//         continue;
+//       }
+
+//       // 🔹 Narration lines (Bill details, UPI, etc.)
+//       if (
+//         !line.match(/^(\d{2}\/\d{2}\/\d{4})\s+B\/F/) &&
+//         !line.match(/^(\d+)\s+([\d,.]+)(.+)$/) &&
+//         !line.match(/^([\d,.]+)\s*(.+)$/) &&
+//         !line.match(/^(Total|C\/F|B\/F)/i)
+//       ) {
+//         narration += (narration ? " " : "") + line;
+//         continue;
+//       }
+//     }
+
+//     // 🔹 Push the last entry
+//     if (currentEntry) {
+//       ledgerList.forEach((l, index) => {
+//         currentEntry[`ledname${index + 1}`] = l.name;
+//         currentEntry[`Dbtamt${index + 1}`] = l.amount;
+//       });
+//       currentEntry.Narration = narration.trim();
+//       entries.push({ Jrnlentry: currentEntry });
+//     }
+
+//     res.status(200).json({
+//       success: true,
+//       totalEntries: entries.length,
+//       data: entries,
+//     });
+//   } catch (error) {
+//     console.log(error);
+//   }
+// };
+
+// exports.Pdf = async (req, res) => {
+//   try {
+//     // ✅ PDF file path
+//     const filePath = path.join(__dirname, "..", "..", "uploads", "test.pdf");
+
+//     if (!fs.existsSync(filePath)) {
+//       return res.status(404).json({ success: false, message: "File not found" });
+//     }
+
+//     const fileBuffer = fs.readFileSync(filePath);
+//     const pdfData = await pdfParse(fileBuffer);
+
+//     const lines = pdfData.text
+//       .split("\n")
+//       .map((l) => l.trim())
+//       .filter((l) => l.length > 0);
+
+//     const entries = [];
+//     let currentEntry = null;
+//     let narration = "";
+//     let ledgerList = [];
+//     let currentDate = "";
+//     let entryCounter = 0;
+
+//     for (let i = 0; i < lines.length; i++) {
+//       const line = lines[i];
+
+//       // 🔹 Skip header / irrelevant lines
+//       if (
+//         line.startsWith("ZAMINDARA FARMSOLUTIONS") ||
+//         line.startsWith("FEROZEPUR ROAD") ||
+//         line.startsWith("FAZILKA") ||
+//         line.includes("Journal Book") ||
+//         line.includes("Dr. Amount") ||
+//         line.includes("Particulars") ||
+//         line.includes("S.No.") ||
+//         line.startsWith("Page")
+//       ) continue;
+
+//       // 🔹 Detect date line → "01/04/2025 B/F"
+//       const dateMatch = line.match(/^(\d{2}\/\d{2}\/\d{4})\s+B\/F/);
+//       if (dateMatch) {
+//         const newDate = dateMatch[1];
+//         if (newDate !== currentDate) {
+//           currentDate = newDate;
+//           entryCounter = 0;
+//         }
+//         continue;
+//       }
+
+//       // 🔹 Detect new journal entry → "1  47821.00SILAGE FACTORY"
+//       const entryStart = line.match(/^(\d+)\s+([\d,.]+)\s*(.+)$/);
+//       if (entryStart) {
+//         // Save previous entry if valid
+//         if (currentEntry && ledgerList.length > 0 && ledgerList[0].name !== "0" && ledgerList[0].name !== "") {
+//           ledgerList.forEach((l, index) => {
+//             currentEntry[`ledname${index + 1}`] = l.name;
+//             currentEntry[`Dbtamt${index + 1}`] = l.amount;
+//           });
+//           currentEntry.Narration = narration.trim();
+//           entries.push({ Jrnlentry: currentEntry });
+//         }
+
+//         // Reset for new entry
+//         ledgerList = [];
+//         narration = "";
+//         entryCounter += 1;
+
+//         ledgerList.push({
+//           amount: entryStart[2].trim(),
+//           name: entryStart[3].trim(),
+//         });
+
+//         currentEntry = {
+//           number: entryCounter,
+//           date: currentDate || "",
+//         };
+//         continue;
+//       }
+
+//       // 🔹 Detect ledger lines (number first)
+//       let ledgerLine = line.match(/^([\d,.]+)\s*(.+)$/);
+//       if (!ledgerLine) {
+//         // 🔹 Detect ledger lines (text first, with : or space)
+//         ledgerLine = line.match(/^(.+?)[:\s]\s*([\d,.]+)$/);
+//         if (ledgerLine) {
+//           const name = ledgerLine[1].trim();
+//           const amount = ledgerLine[2].trim();
+
+//           // 🧠 Skip invalid ledger lines
+//           if (
+//             name === "0" ||
+//             !name ||
+//             name.match(/^\d+$/) ||
+//             amount.length > 8 ||
+//             name.includes("@") ||
+//             name.match(/\d{6,}/) ||
+//             name.match(/(Bill|Being|UPI|Tuda|Slip|No\.|Dated|Against|Interest|Payment)/i)
+//           ) {
+//             narration += (narration ? " " : "") + line;
+//             continue;
+//           }
+
+//           ledgerList.push({ name, amount });
+//           continue;
+//         }
+//       } else {
+//         // Number-first style
+//         const amount = ledgerLine[1].trim();
+//         const name = ledgerLine[2].trim();
+
+//         if (
+//           amount.length > 8 ||
+//           name.match(/^\d+$/) ||
+//           name === "0" ||
+//           name.match(/\d{6,}/) ||
+//           name.includes("@") ||
+//           name.match(/(Bill|Being|UPI|Tuda|Slip|No\.|Dated|Against|Interest|Payment)/i) ||
+//           name.match(/^(Total|C\/F|B\/F)/i) ||
+//           name.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/i)
+//         ) {
+//           narration += (narration ? " " : "") + line;
+//           continue;
+//         }
+
+//         ledgerList.push({ amount, name });
+//         continue;
+//       }
+
+//       // 🔹 Fallback → narration
+//       narration += (narration ? " " : "") + line;
+//     }
+
+//     // 🔹 Push last entry if valid
+//     if (currentEntry && ledgerList.length > 0 && ledgerList[0].name !== "0" && ledgerList[0].name !== "") {
+//       ledgerList.forEach((l, index) => {
+//         currentEntry[`ledname${index + 1}`] = l.name;
+//         currentEntry[`Dbtamt${index + 1}`] = l.amount;
+//       });
+//       currentEntry.Narration = narration.trim();
+//       entries.push({ Jrnlentry: currentEntry });
+//     }
+
+//     res.status(200).json({
+//       success: true,
+//       totalEntries: entries.length,
+//       data: entries,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ success: false, message: "Server error", error: error.message });
+//   }
+// };
+
+// exports.Pdf = async (req, res) => {
+//   try {
+//     // ✅ PDF file path
+//     const filePath = path.join(__dirname, "..", "..", "uploads", "test.pdf");
+
+//     if (!fs.existsSync(filePath)) {
+//       return res
+//         .status(404)
+//         .json({ success: false, message: "File not found" });
+//     }
+
+//     const fileBuffer = fs.readFileSync(filePath);
+//     const pdfData = await pdfParse(fileBuffer);
+
+//     const lines = pdfData.text
+//       .split("\n")
+//       .map((l) => l.trim())
+//       .filter((l) => l.length > 0);
+
+//     const entries = [];
+//     let currentEntry = null;
+//     let narration = "";
+//     let ledgerList = [];
+//     let currentDate = "";
+//     let entryCounter = 0;
+
+//     for (let i = 0; i < lines.length; i++) {
+//       const line = lines[i];
+
+//       // 🔹 Skip header / irrelevant lines
+//       if (
+//         line.startsWith("ZAMINDARA FARMSOLUTIONS") ||
+//         line.startsWith("FEROZEPUR ROAD") ||
+//         line.startsWith("FAZILKA") ||
+//         line.includes("Journal Book") ||
+//         line.includes("Dr. Amount") ||
+//         line.includes("Particulars") ||
+//         line.includes("S.No.") ||
+//         line.startsWith("Page")
+//       )
+//         continue;
+
+//       // 🔹 Detect date line → "01/04/2025 B/F"
+//       const dateMatch = line.match(/^(\d{2}\/\d{2}\/\d{4})\s+B\/F/);
+//       if (dateMatch) {
+//         const newDate = dateMatch[1];
+//         if (newDate !== currentDate) {
+//           currentDate = newDate;
+//           entryCounter = 0;
+//         }
+//         continue;
+//       }
+
+//       // 🔹 Detect new journal entry → "1  47821.00SILAGE FACTORY"
+//       const entryStart = line.match(/^(\d+)\s+([\d,.]+)\s*(.+)$/);
+//       if (entryStart) {
+//         // Save previous entry if valid
+//         if (
+//           currentEntry &&
+//           ledgerList.length > 0 &&
+//           ledgerList[0].name !== "0" &&
+//           ledgerList[0].name !== ""
+//         ) {
+//           ledgerList.forEach((l, index) => {
+//             currentEntry[`ledname${index + 1}`] = l.name;
+//             currentEntry[`Dbtamt${index + 1}`] = l.amount;
+//           });
+//           currentEntry.Narration = narration.trim();
+//           entries.push({ Jrnlentry: currentEntry });
+//         }
+
+//         // Reset for new entry
+//         ledgerList = [];
+//         narration = "";
+//         entryCounter += 1;
+
+//         ledgerList.push({
+//           amount: entryStart[2].trim(),
+//           name: entryStart[3].trim(),
+//         });
+
+//         currentEntry = {
+//           number: entryCounter,
+//           date: currentDate || "",
+//         };
+//         continue;
+//       }
+
+//       // 🔹 Skip lines that are actually narration (dates, "Being", etc.)
+//       const isNarrationDate = line.match(
+//   /^(\d{1,2}\s+)?(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(\s+\d{4})?$/i
+// );
+
+//       const startsWithBeing = line.match(/^Being/i);
+//       if (isNarrationDate || startsWithBeing) {
+//         narration += (narration ? " " : "") + line;
+//         continue;
+//       }
+
+//       // 🔹 Detect ledger lines
+//       // let ledgerLine = line.match(/^([\d,.]+)\s*(.+)$/); // number first
+//       // if (!ledgerLine) {
+//       //   ledgerLine = line.match(/^(.+?)[:\s]\s*([\d,.]+)$/); // text first
+//       //   if (ledgerLine) {
+//       //     const name = ledgerLine[1].trim();
+//       //     const amount = ledgerLine[2].trim();
+
+//       //     if (
+//       //       name === "0" ||
+//       //       !name ||
+//       //       name.match(/^\d+$/) ||
+//       //       amount.length > 8 ||
+//       //       name.includes("@") ||
+//       //       name.match(/\d{6,}/) ||
+//       //       name.match(
+//       //         /(Bill|Being|UPI|Tuda|Slip|No\.|Dated|Against|Interest|Payment)/i
+//       //       )
+//       //     ) {
+//       //       narration += (narration ? " " : "") + line;
+//       //       continue;
+//       //     }
+
+//       //     ledgerList.push({ name, amount });
+//       //     continue;
+//       //   }
+//       // } else {
+//       //   const amount = ledgerLine[1].trim();
+//       //   const name = ledgerLine[2].trim();
+
+//       //   if (
+//       //     amount.length > 8 ||
+//       //     name.match(/^\d+$/) ||
+//       //     name === "0" ||
+//       //     name.match(/\d{6,}/) ||
+//       //     name.includes("@") ||
+//       //     name.match(
+//       //       /(Bill|Being|UPI|Tuda|Slip|No\.|Dated|Against|Interest|Payment)/i
+//       //     ) ||
+//       //     name.match(/^(Total|C\/F|B\/F)/i) ||
+//       //     name.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/i)
+//       //   ) {
+//       //     narration += (narration ? " " : "") + line;
+//       //     continue;
+//       //   }
+
+//       //   ledgerList.push({ amount, name });
+//       //   continue;
+//       // }
+
+//       let ledgerLine = null;
+
+// // ✅ Format 1 → Amount first: "108066.00 WHEAT STRAW SALE"
+// if (/^[\d.,]+\s+.+$/.test(line)) {
+//   const parts = line.trim().split(/\s+/, 2);
+//   ledgerLine = {
+//     amount: parts[0],
+//     name: line.replace(parts[0], "").trim()
+//   };
+// }
+
+// // ✅ Format 2 → Name first: "WHEAT STRAW SALE 108066.00"
+// else if (/.+\s+[\d.,]+$/.test(line)) {
+//   const match = line.match(/^(.+?)\s+([\d.,]+)$/);
+//   if (match) {
+//     ledgerLine = {
+//       name: match[1].trim(),
+//       amount: match[2].trim()
+//     };
+//   }
+// }
+
+// if (ledgerLine) {
+//   // ✅ Filter out wrong entries (irrelevant names)
+//   if (
+//     ledgerLine.name === "0" ||
+//     !ledgerLine.name ||
+//     ledgerLine.name.match(/^\d+$/) ||
+//     ledgerLine.amount.length > 12 ||
+//     ledgerLine.name.includes("@") ||
+//     ledgerLine.name.match(/\d{6,}/) ||
+//     ledgerLine.name.match(
+//       /(Bill|Being|UPI|Tuda|Slip|No\.|Dated|Against|Interest|Payment|Total|C\/F|B\/F)/i
+//     )
+//   ) {
+//     narration += (narration ? " " : "") + line;
+//     continue;
+//   }
+
+//   // ✅ Valid ledger → push to ledgerList
+//   ledgerList.push({
+//     name: ledgerLine.name,
+//     amount: ledgerLine.amount,
+//   });
+//   continue;
+// }
+
+//       // 🔹 Fallback → narration
+//       // narration += (narration ? " " : "") + line;
+//       narration += (narration ? " " : "") + line;
+//     }
+
+//     // 🔹 Push last entry if valid
+//     if (
+//       currentEntry &&
+//       ledgerList.length > 0 &&
+//       ledgerList[0].name !== "0" &&
+//       ledgerList[0].name !== ""
+//     ) {
+//       ledgerList.forEach((l, index) => {
+//         currentEntry[`ledname${index + 1}`] = l.name;
+//         currentEntry[`Dbtamt${index + 1}`] = l.amount;
+//       });
+//       currentEntry.Narration = narration.trim();
+//       entries.push({ Jrnlentry: currentEntry });
+//     }
+
+//     res.status(200).json({
+//       success: true,
+//       totalEntries: entries.length,
+//       data: entries,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res
+//       .status(500)
+//       .json({ success: false, message: "Server error", error: error.message });
+//   }
+// };
+
+// exports.Pdf = async (req, res) => {
+//   try {
+//     // ✅ PDF file path
+//     const filePath = path.join(__dirname, "..", "..", "uploads", "test.pdf");
+
+//     if (!fs.existsSync(filePath)) {
+//       return res
+//         .status(404)
+//         .json({ success: false, message: "File not found" });
+//     }
+
+//     const fileBuffer = fs.readFileSync(filePath);
+//     const pdfData = await pdfParse(fileBuffer);
+
+//     // Split into non-empty lines and normalize spaces
+//     const rawLines = pdfData.text.split("\n");
+//     const lines = rawLines
+//       .map((l) => l.replace(/\u00A0/g, " ").replace(/\t/g, " ").trim())
+//       .filter((l) => l.length > 0);
+
+//     const entries = [];
+//     let currentEntry = null;
+//     let narration = "";
+//     let ledgerList = [];
+//     let currentDate = "";
+//     let entryCounter = 0;
+
+//     for (let i = 0; i < lines.length; i++) {
+//       // Preprocess line: collapse multiple spaces, insert missing space between digits and letters
+//       let raw = lines[i].replace(/\s+/g, " ").trim();
+
+//       // Insert spaces where numbers and letters are concatenated (handles English + many Indic scripts)
+//       raw = raw.replace(/(\d)([A-Za-z\u0900-\u097F])/g, "$1 $2");
+//       raw = raw.replace(/([A-Za-z\u0900-\u097F])(\d)/g, "$1 $2");
+//       raw = raw.replace(/\s+/g, " ").trim();
+
+//       const line = raw;
+
+//       // 🔹 Skip header / irrelevant lines
+//       if (
+//         line.startsWith("ZAMINDARA FARMSOLUTIONS") ||
+//         line.startsWith("FEROZEPUR ROAD") ||
+//         line.startsWith("FAZILKA") ||
+//         line.includes("Journal Book") ||
+//         line.includes("Dr. Amount") ||
+//         line.includes("Particulars") ||
+//         line.includes("S.No.") ||
+//         line.startsWith("Page")
+//       ) {
+//         continue;
+//       }
+
+//       // 🔹 Detect date line → "01/04/2025 B/F"
+//       const dateMatch = line.match(/^(\d{2}\/\d{2}\/\d{4})\s+B\/F/);
+//       if (dateMatch) {
+//         const newDate = dateMatch[1];
+//         if (newDate !== currentDate) {
+//           currentDate = newDate;
+//           entryCounter = 0;
+//         }
+//         continue;
+//       }
+
+//       // 🔹 Detect new journal entry → "1  47821.00 SILAGE FACTORY"
+//       const entryStart = line.match(/^(\d+)\s+([\d,]+(?:\.\d+)?)\s+(.+)$/);
+//       if (entryStart) {
+//         // Save previous entry if valid
+//         if (
+//           currentEntry &&
+//           ledgerList.length > 0 &&
+//           ledgerList[0].name !== "0" &&
+//           ledgerList[0].name !== ""
+//         ) {
+//           ledgerList.forEach((l, index) => {
+//             currentEntry[`ledname${index + 1}`] = l.name;
+//             currentEntry[`Dbtamt${index + 1}`] = l.amount;
+//           });
+//           currentEntry.Narration = narration.trim();
+//           entries.push({ Jrnlentry: currentEntry });
+//         }
+
+//         // Reset for new entry
+//         ledgerList = [];
+//         narration = "";
+//         entryCounter += 1;
+
+//         ledgerList.push({
+//           name: entryStart[3].trim(),
+//           amount: entryStart[2].trim(),
+//         });
+
+//         currentEntry = {
+//           number: entryCounter,
+//           date: currentDate || "",
+//         };
+//         continue;
+//       }
+
+//       // 🔹 Skip lines that are actually narration (dates, "Being", etc.)
+//       const isNarrationDate = line.match(
+//         /^(\d{1,2}\s+)?(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(\s+\d{4})?$/i
+//       );
+//       const startsWithBeing = line.match(/^Being/i);
+//       if (isNarrationDate || startsWithBeing) {
+//         narration += (narration ? " " : "") + line;
+//         continue;
+//       }
+
+//       // ------------------------------
+//       // 🔹 Improved ledger detection
+//       // ------------------------------
+//       let ledgerLine = null;
+
+//       // Pattern for an amount (commas allowed, optional decimals)
+//       const amountPattern = "[\\d,]+(?:\\.\\d+)?";
+
+//       // Format A: Amount first: "108066.00 WHEAT STRAW SALE"
+//       const amtFirst = line.match(new RegExp("^(" + amountPattern + ")\\s+(.+)$"));
+
+//       // Format B: Name first: "WHEAT STRAW SALE 108066.00"
+//       const nameFirst = line.match(new RegExp("^(.+?)\\s+(" + amountPattern + ")$"));
+
+//       // Choose best candidate (prefer entry-type lines already handled earlier)
+//       if (amtFirst) {
+//         ledgerLine = {
+//           amount: amtFirst[1].trim(),
+//           name: amtFirst[2].trim(),
+//         };
+//       } else if (nameFirst) {
+//         ledgerLine = {
+//           name: nameFirst[1].trim(),
+//           amount: nameFirst[2].trim(),
+//         };
+//       }
+
+//       // Additional validation: ensure amount is a "clean" number (no @ or slashes)
+//       if (ledgerLine) {
+//         const cleanAmountCheck = /^[\d,]+(?:\.\d+)?$/.test(
+//           ledgerLine.amount.replace(/\s+/g, "")
+//         );
+//         const nameIsNumeric = /^[\d,\.]+$/.test(ledgerLine.name);
+
+//         // Filter out lines that look like bills, slips, dates, totals, or are malformed
+//         const nameLooksLikeNarration = ledgerLine.name.match(
+//           /(Bill|Being|UPI|Tuda|Slip|No\.|Dated|Against|Interest|Payment|Total|C\/F|B\/F|BALES|WT|SLIP)/i
+//         );
+
+//         if (
+//           !cleanAmountCheck ||
+//           nameIsNumeric ||
+//           !ledgerLine.name ||
+//           ledgerLine.name === "0" ||
+//           ledgerLine.amount.length > 15 ||
+//           (ledgerLine.name && nameLooksLikeNarration)
+//         ) {
+//           // treat as narration if it fails validation
+//           narration += (narration ? " " : "") + line;
+//           continue;
+//         }
+
+//         // ✅ Valid ledger — push it
+//         ledgerList.push({
+//           name: ledgerLine.name,
+//           amount: ledgerLine.amount,
+//         });
+//         continue;
+//       }
+
+//       // 🔹 If not ledger → treat as narration (fallback)
+//       narration += (narration ? " " : "") + line;
+//     }
+
+//     // 🔹 Push last entry if valid
+//     if (
+//       currentEntry &&
+//       ledgerList.length > 0 &&
+//       ledgerList[0].name !== "0" &&
+//       ledgerList[0].name !== ""
+//     ) {
+//       ledgerList.forEach((l, index) => {
+//         currentEntry[`ledname${index + 1}`] = l.name;
+//         currentEntry[`Dbtamt${index + 1}`] = l.amount;
+//       });
+//       currentEntry.Narration = narration.trim();
+//       entries.push({ Jrnlentry: currentEntry });
+//     }
+
+//     res.status(200).json({
+//       success: true,
+//       totalEntries: entries.length,
+//       data: entries,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res
+//       .status(500)
+//       .json({ success: false, message: "Server error", error: error.message });
+//   }
+// };
+
+// const fs = require("fs");
+// const path = require("path");
+// const pdfParse = require("pdf-parse");
+
 exports.Pdf = async (req, res) => {
   try {
-   const filePath = path.join(__dirname, "..", "..", "uploads", "test.pdf");
+    // ✅ PDF file path
+    const filePath = path.join(__dirname, "..", "..", "uploads", "test.pdf");
 
-    console.log(">>>>>>>>>>>>>>>>filePath",filePath)
-    // Check if file exists
     if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ success: false, message: "File not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "File not found" });
     }
-    // Read file as buffer
-    const file = fs.readFileSync(filePath);
-    // const file = req.file;
-    const pdfData = await pdfParse(file.buffer);
-    const lines = pdfData.text
-      .split("\n")
-      .map((l) => l.trim())
+
+    const fileBuffer = fs.readFileSync(filePath);
+    const pdfData = await pdfParse(fileBuffer);
+
+    // Split lines, normalize spaces, remove empty lines
+    const rawLines = pdfData.text.split("\n");
+    const lines = rawLines
+      .map((l) =>
+        l
+          .replace(/\u00A0/g, " ")
+          .replace(/\t/g, " ")
+          .trim()
+      )
       .filter((l) => l.length > 0);
 
     const entries = [];
@@ -622,12 +1365,18 @@ exports.Pdf = async (req, res) => {
     let narration = "";
     let ledgerList = [];
     let currentDate = "";
-    let entryCounter = 0; // resets each date section
+    let entryCounter = 0;
 
     for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
+      // Preprocess line: collapse spaces & insert missing space between digits and letters
+      let raw = lines[i].replace(/\s+/g, " ").trim();
+      raw = raw.replace(/(\d)([A-Za-z\u0900-\u097F])/g, "$1 $2");
+      raw = raw.replace(/([A-Za-z\u0900-\u097F])(\d)/g, "$1 $2");
+      raw = raw.replace(/\s+/g, " ").trim();
 
-      // 🔹 Skip header & irrelevant lines
+      const line = raw;
+
+      // 🔹 Skip headers / irrelevant lines
       if (
         line.startsWith("ZAMINDARA FARMSOLUTIONS") ||
         line.startsWith("FEROZEPUR ROAD") ||
@@ -636,28 +1385,34 @@ exports.Pdf = async (req, res) => {
         line.includes("Dr. Amount") ||
         line.includes("Particulars") ||
         line.includes("S.No.") ||
-        line.startsWith("Page")
-      )
+        line.startsWith("Page") ||
+        line.startsWith("Total") ||
+        line.startsWith("C/F")
+      ) {
         continue;
+      }
 
-      // 🔹 Detect date line → "01/04/2025 B/F  0.00  0.00"
+      // 🔹 Detect date line → "01/04/2025 B/F"
       const dateMatch = line.match(/^(\d{2}\/\d{2}\/\d{4})\s+B\/F/);
-
       if (dateMatch) {
         const newDate = dateMatch[1];
-        // ✅ Reset numbering when new date section starts
         if (newDate !== currentDate) {
           currentDate = newDate;
           entryCounter = 0;
         }
         continue;
       }
-      // 🔹 Detect new journal entry → "1  47821.00SILAGE FACTORY"
-      const entryStart = line.match(/^(\d+)\s+([\d,.]+)(.+)$/);
-      // console.log(">>>>>>>>>>>>>>>>>dateMatch", entryStart);
+
+      // 🔹 Detect new journal entry → "1  47821.00 SILAGE FACTORY"
+      const entryStart = line.match(/^(\d+)\s+([\d,]+(?:\.\d+)?)\s+(.+)$/);
       if (entryStart) {
-        // Save previous entry if exists
-        if (currentEntry) {
+        // Save previous entry if valid
+        if (
+          currentEntry &&
+          ledgerList.length > 0 &&
+          ledgerList[0].name !== "0" &&
+          ledgerList[0].name !== ""
+        ) {
           ledgerList.forEach((l, index) => {
             currentEntry[`ledname${index + 1}`] = l.name;
             currentEntry[`Dbtamt${index + 1}`] = l.amount;
@@ -667,14 +1422,13 @@ exports.Pdf = async (req, res) => {
         }
 
         // Reset for new entry
-        narration = "";
         ledgerList = [];
-        entryCounter += 1; // ✅ increment within current date
+        narration = "";
+        entryCounter += 1;
 
-        // Create new entry
         ledgerList.push({
-          amount: entryStart[2].trim(),
           name: entryStart[3].trim(),
+          amount: entryStart[2].trim(),
         });
 
         currentEntry = {
@@ -684,58 +1438,106 @@ exports.Pdf = async (req, res) => {
         continue;
       }
 
-      // 🔹 Detect additional ledgers → "47821.00WHEAT STRAW SALE"
-      // 🔹 Detect additional ledgers → e.g. "47821.00 WHEAT STRAW SALE"
-   // 🔹 Detect additional ledgers (true Dr/Cr lines only)
-// 🔹 Detect additional ledgers (true Dr/Cr lines only)
-const ledgerLine = line.match(/^([\d,.]+)\s*(.+)$/);
-if (ledgerLine) {
-  const amount = ledgerLine[1].trim();
-  const name = ledgerLine[2].trim();
+      // 🔹 Skip lines that are narration dates / start with Being
+      const isNarrationDate = line.match(
+        /^(\d{1,2}\s+)?(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(\s+\d{4})?$/i
+      );
+      const startsWithBeing = line.match(/^Being/i);
+      if (isNarrationDate || startsWithBeing) {
+        narration += (narration ? " " : "") + line;
+        continue;
+      }
 
-  // 🧠 Skip invalid or narration-like lines
-  if (
-    // long numeric references like "196331288677 0"
-    amount.length > 8 || 
-    name.match(/^\d+$/) || // if name itself is just a number
-    name === "0" || 
-    name.match(/\d{6,}/) || // any long numeric string
-    name.includes("@") || // UPI or email-like content
-    name.match(/(Bill|Being|UPI|Tuda|Slip|No\.|Dated|Against)/i) ||
-    name.match(/^(Total|C\/F|B\/F)/i) ||
-    name.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/i)
-  ) {
-    narration += (narration ? " " : "") + line;
-    continue;
-  }
+      // ------------------------------
+      // 🔹 Improved ledger detection with UPI/Paytm/PhonePe filter
+      // ------------------------------
+      let ledgerLine = null;
+      const amountPattern = "[\\d,]+(?:\\.\\d+)?";
 
-  // ✅ Only add if it’s a clean Dr/Cr style line
-  ledgerList.push({ amount, name });
-  continue;
-}
+      const amtFirst = line.match(
+        new RegExp("^(" + amountPattern + ")\\s+(.+)$")
+      );
+      const nameFirst = line.match(
+        new RegExp("^(.+?)\\s+(" + amountPattern + ")$")
+      );
 
+      if (amtFirst) {
+        ledgerLine = {
+          amount: amtFirst[1].trim(),
+          name: amtFirst[2].trim(),
+        };
+      } else if (nameFirst) {
+        ledgerLine = {
+          name: nameFirst[1].trim(),
+          amount: nameFirst[2].trim(),
+        };
+      }
 
+      // 🔹 Extra validation: ignore if line mentions UPI/Paytm/PhonePe/GPay/etc.
+      const isPaymentLine = /UPI|Paytm|PhonePe|GPay/i.test(line);
+      const amountNum = parseFloat(ledgerLine?.amount?.replace(/,/g, "")) || 0;
+      const isSmallOrYear =
+        (amountNum >= 1 && amountNum <= 31) ||
+        (amountNum >= 2023 && amountNum <= 2099);
 
-      // 🔹 Narration lines (Bill details, UPI, etc.)
-    if (
-  !line.match(/^(\d{2}\/\d{2}\/\d{4})\s+B\/F/) &&
-  !line.match(/^(\d+)\s+([\d,.]+)(.+)$/) &&
-  !line.match(/^([\d,.]+)\s*(.+)$/) &&
-  !line.match(/^(Total|C\/F|B\/F)/i)
-) {
-  narration += (narration ? " " : "") + line;
-  continue;
-}
+      if (ledgerLine && !isPaymentLine && !isSmallOrYear) {
+        const nameLooksLikeNarration = ledgerLine.name.match(
+          /(Bill|Being|Slip|No\.|Dated|Against|Interest|Payment|Total|C\/F|B\/F|BALES|WT|SLIP)/i
+        );
+        const cleanAmountCheck = /^[\d,]+(?:\.\d+)?$/.test(
+          ledgerLine.amount.replace(/\s+/g, "")
+        );
+        const nameIsNumeric = /^[\d,\.]+$/.test(ledgerLine.name);
+
+        if (
+          cleanAmountCheck &&
+          !nameIsNumeric &&
+          ledgerLine.name &&
+          !nameLooksLikeNarration &&
+          ledgerLine.name !== "0" &&
+          ledgerLine.amount.length <= 15
+        ) {
+          // ✅ Valid ledger
+          ledgerList.push({
+            name: ledgerLine.name,
+            amount: ledgerLine.amount,
+          });
+          continue;
+        }
+      }
+
+      // 🔹 If not ledger → treat as narration
+      narration += (narration ? " " : "") + line;
     }
 
-    // 🔹 Push the last entry
-    if (currentEntry) {
-      ledgerList.forEach((l, index) => {
-        currentEntry[`ledname${index + 1}`] = l.name;
-        currentEntry[`Dbtamt${index + 1}`] = l.amount;
-      });
-      currentEntry.Narration = narration.trim();
-      entries.push({ Jrnlentry: currentEntry });
+    // 🔹 Push last entry if valid
+    if (
+      currentEntry &&
+      ledgerList.length > 0 &&
+      ledgerList[0].name !== "0" &&
+      ledgerList[0].name !== ""
+    ) {
+ const firstLedgerName = ledgerList[0]?.name || "";
+const firstLedgerAmount = ledgerList[0]?.amount || "";
+
+// Regex to detect month + year or month + year + number
+const isFakeLedger =
+  /^((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4})(\s+[\d,]+(\.\d+)?)?$/.test(
+    firstLedgerName
+  ) ||
+  /^(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}$/.test(
+    firstLedgerName
+  );
+
+// Only push if it’s NOT fake
+if (!isFakeLedger) {
+  ledgerList.forEach((l, index) => {
+    currentEntry[`ledname${index + 1}`] = l.name;
+    currentEntry[`Dbtamt${index + 1}`] = l.amount;
+  });
+  currentEntry.Narration = narration.trim();
+  entries.push({ Jrnlentry: currentEntry });
+}
     }
 
     res.status(200).json({
@@ -744,6 +1546,9 @@ if (ledgerLine) {
       data: entries,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
+    res
+      .status(500)
+      .json({ success: false, message: "Server error", error: error.message });
   }
 };
