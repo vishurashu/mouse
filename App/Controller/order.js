@@ -1430,7 +1430,6 @@ exports.getLaser = async (req, res) => {
 //           name: entryStart[3].trim(),
 //           amount: entryStart[2].trim(),
 //         });
-        
 
 //         currentEntry = {
 //           number: entryCounter,
@@ -1554,9 +1553,6 @@ exports.getLaser = async (req, res) => {
 //   }
 // };
 
-
-
-
 exports.Pdf = async (req, res) => {
   try {
     // ✅ PDF file path
@@ -1574,7 +1570,12 @@ exports.Pdf = async (req, res) => {
     // Split lines, normalize spaces, remove empty lines
     const rawLines = pdfData.text.split("\n");
     const lines = rawLines
-      .map((l) => l.replace(/\u00A0/g, " ").replace(/\t/g, " ").trim())
+      .map((l) =>
+        l
+          .replace(/\u00A0/g, " ")
+          .replace(/\t/g, " ")
+          .trim()
+      )
       .filter((l) => l.length > 0);
 
     const entries = [];
@@ -1631,17 +1632,20 @@ exports.Pdf = async (req, res) => {
           ledgerList[0].name !== ""
         ) {
           ledgerList.forEach((l, index) => {
-  let amt = l.amount.replace(/,/g, ""); // keep as string
+            let amtStr = l.amount.replace(/,/g, ""); // remove commas but keep decimals
+            let amtNum = parseFloat(amtStr);
 
-  // Only make negative for Dr. Amount (first ledger)
-  if (index === 0) {
-    let amtNum = parseFloat(amt);
-    if (!isNaN(amtNum) && amtNum > 0) amt = (-amtNum).toString();
-  }
+            // ✅ Always keep 2 decimal places
+            let formattedAmt = amtNum.toFixed(2);
 
-  currentEntry[`ledname${index + 1}`] = l.name;
-  currentEntry[`Dbtamt${index + 1}`] = amt;
-});
+            // ✅ Only convert the FIRST ledger amount (Dr. Amount) to negative
+            if (index === 0 && amtNum > 0) {
+              formattedAmt = (-amtNum).toFixed(2);
+            }
+
+            currentEntry[`ledname${index + 1}`] = l.name;
+            currentEntry[`Dbtamt${index + 1}`] = formattedAmt.toString();
+          });
 
           currentEntry.Narration = narration.trim();
           entries.push({ Jrnlentry: currentEntry });
@@ -1680,8 +1684,12 @@ exports.Pdf = async (req, res) => {
       let ledgerLine = null;
       const amountPattern = "[\\d,]+(?:\\.\\d+)?";
 
-      const amtFirst = line.match(new RegExp("^(" + amountPattern + ")\\s+(.+)$"));
-      const nameFirst = line.match(new RegExp("^(.+?)\\s+(" + amountPattern + ")$"));
+      const amtFirst = line.match(
+        new RegExp("^(" + amountPattern + ")\\s+(.+)$")
+      );
+      const nameFirst = line.match(
+        new RegExp("^(.+?)\\s+(" + amountPattern + ")$")
+      );
 
       if (amtFirst) {
         ledgerLine = {
@@ -1706,10 +1714,16 @@ exports.Pdf = async (req, res) => {
         (amountNum >= 1 && amountNum <= 31) ||
         (amountNum >= 2023 && amountNum <= 2099);
 
-      const nameLooksLikeNarration = ledgerLine.name.match(
-        /(Bill|Being|Slip|No\.|Dated|Against|Interest|Payment|Total|C\/F|B\/F|BALES|WT|SLIP)/i
+      // const nameLooksLikeNarration = ledgerLine.name.match(
+      //   /(Bill|Being|Slip|No\.|Dated|Against|Interest|Payment|Total|C\/F|B\/F|BALES|WT|SLIP|FACTORY-YESB)/i
+      // );
+      const nameLooksLikeNarration =
+  /(Bill|Being|Slip|No\.|Dated|Against|Interest|Payment|Total|C\/F|B\/F|BALES|WT|SLIP|FACTORY-YESB)/i.test(ledgerLine.name) ||
+  /\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)\b/i.test(ledgerLine.name) ||
+  /\d{1,3}(,\d{3})*\.\d{2}/.test(ledgerLine.name);
+      const cleanAmountCheck = /^[\d,]+(?:\.\d+)?$/.test(
+        ledgerLine.amount.replace(/\s+/g, "")
       );
-      const cleanAmountCheck = /^[\d,]+(?:\.\d+)?$/.test(ledgerLine.amount.replace(/\s+/g, ""));
       const nameIsNumeric = /^[\d,\.]+$/.test(ledgerLine.name);
 
       if (
@@ -1757,6 +1771,8 @@ exports.Pdf = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: "Server error", error: error.message });
+    res
+      .status(500)
+      .json({ success: false, message: "Server error", error: error.message });
   }
 };
